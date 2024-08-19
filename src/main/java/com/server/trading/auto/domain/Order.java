@@ -27,4 +27,5 @@ public class Order {
     private String locked;              // 거래에 사용중인 비용
     private String executedVolume;      // 체결된 양
     private Integer tradesCount;        // 해당 주문에 걸린 체결 수
+    private Double rsi;                 // 주문 시점의 RSI
 }
