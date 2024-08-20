@@ -28,4 +28,5 @@ public class Ethereum {
     private Double candleAccTradePrice;     // 누적 거래 금액
     private Double candleAccTradeVolume;    // 누적 거래량
     private Integer unit;                   // 분 단위(유닛)
+    private Double rsi;                     // Calculated RSI
 }
