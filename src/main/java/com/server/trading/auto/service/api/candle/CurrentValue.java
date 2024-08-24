@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.server.trading.auto.dto.ValueSendRequestDto;
 import com.server.trading.auto.service.api.UpbitAbstract;
 import com.server.trading.auto.util.CoinListUtil;
 import com.server.trading.auto.util.api.ExceptionCode;
@@ -15,7 +16,9 @@ import okhttp3.Response;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -28,6 +31,7 @@ public class CurrentValue extends UpbitAbstract {
     }
 
     private final Map<String, Integer> currentValue = new HashMap<>();
+    private final List<ValueSendRequestDto> sendData = new ArrayList<>();
 
     private void currentValue() {
         OkHttpClient client = new OkHttpClient();
@@ -47,7 +51,11 @@ public class CurrentValue extends UpbitAbstract {
 
                     for (JsonElement element : jsonArray) {
                         JsonObject candle = element.getAsJsonObject();
-                        int tradePrice = candle.get("trade_price").getAsInt();
+
+                        ValueSendRequestDto send = new ValueSendRequestDto(candle);
+                        sendData.add(send);
+
+                        int tradePrice = send.getTrade_price();
                         currentValue.put(symbol, tradePrice);
                     }
                 } else {
