@@ -1,21 +1,23 @@
-package com.server.trading.auto.util;
+package com.server.trading.auto.util.strategy;
+
+import com.server.trading.auto.dto.MinuteCandleValueResponseDto;
 
 import java.util.*;
 
 public class RSICalculator {
 
-    public Map<String, Double> getCalculatedRSI(Map<String, ArrayList<Integer>> values) {
+    public Map<String, Double> calculate(Map<String, List<MinuteCandleValueResponseDto>> values) {
         Map<String, Double> rsi = new HashMap<>();
 
         for (String coin : values.keySet()) {
-            ArrayList<Integer> prices = values.get(coin);
-            Collections.reverse(prices);
+            List<MinuteCandleValueResponseDto> prices = new ArrayList<>(values.get(coin));
+            prices.sort(Comparator.comparing(MinuteCandleValueResponseDto::getCandle_date_time_kst));
 
             double zero = 0;
             List<Double> upList = new ArrayList<>();
             List<Double> downList = new ArrayList<>();
             for (int i = 0; i < prices.size() - 1; i++) {
-                double delta = prices.get(i + 1) - prices.get(i);
+                double delta = prices.get(i + 1).getTrade_price() - prices.get(i).getTrade_price();
 
                 if (delta > 0) {
                     upList.add(delta);

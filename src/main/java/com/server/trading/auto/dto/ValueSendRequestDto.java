@@ -38,6 +38,10 @@ public class ValueSendRequestDto {
     private Long timestamp;
     @Setter
     private Double rsi;
+    @Setter
+    private Integer macd_50;
+    @Setter
+    private Integer macd_200;
 
     @Builder
     public ValueSendRequestDto(
