@@ -30,8 +30,14 @@ public class CurrentValue extends UpbitAbstract {
         currentValue();
     }
 
-    private final Map<String, Integer> currentValue = new HashMap<>();
-    private final List<ValueSendRequestDto> sendData = new ArrayList<>();
+    @Override
+    public void clear() {
+        sendData.clear();
+        currentValue.clear();
+    }
+
+    private final Map<String, Integer> currentValue = new HashMap<>();      // current value of each coin
+    private final List<ValueSendRequestDto> sendData = new ArrayList<>();   // value data to send through kafka producer
 
     private void currentValue() {
         OkHttpClient client = new OkHttpClient();
