@@ -28,4 +28,6 @@ public class Order {
     private String executedVolume;      // 체결된 양
     private Integer tradesCount;        // 해당 주문에 걸린 체결 수
     private Double rsi;                 // 주문 시점의 RSI
+    private Integer macd_50;            // 주문 시점의 macd 50
+    private Integer macd_200;           // 주문 시점의 macd 200
 }
