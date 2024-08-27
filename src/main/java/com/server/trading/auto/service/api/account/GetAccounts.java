@@ -21,10 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Getter
 @Service
@@ -40,13 +37,20 @@ public class GetAccounts extends UpbitAbstract {
 
     private final CurrentValue currentValue;
 
-    private List<AccountSaveRequestDto> account;
-    private Map<String, Double> coins;
-    private Double capital = 0.0;
+    private List<AccountSaveRequestDto> account = new ArrayList<>();    // list of asset (coin, KRW)
+    private Map<String, Double> coins = new HashMap<>();                // asset of each coin
+    private Double asset = 0.0;                                         // total asset (coins + KRW)
 
     @Override
     public void call() {
         account();
+    }
+
+    @Override
+    public void clear() {
+        account.clear();
+        coins.clear();
+        asset = 0.0;
     }
 
     private void account() {
@@ -77,12 +81,12 @@ public class GetAccounts extends UpbitAbstract {
             for (AccountSaveRequestDto dto : account) {
                 if (currentValues.containsKey(dto.getCurrency())) {
                     add = currentValues.get(dto.getCurrency()) * dto.getBalance();
-                    capital += add;
+                    asset += add;
                     coins.put(dto.getCurrency(), add);
                 }
                 if (dto.getCurrency().equals("KRW")) {
                     add = (Double) dto.getBalance();
-                    capital += add;
+                    asset += add;
                     coins.put("KRW", add);
                 }
             }

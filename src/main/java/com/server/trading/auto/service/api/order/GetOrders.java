@@ -5,7 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.server.trading.auto.dto.OrderWaitResponseDto;
-import com.server.trading.auto.service.api.UpbitAbstract;
+import com.server.trading.auto.util.CoinListUtil;
 import com.server.trading.auto.util.api.ExceptionCode;
 import com.server.trading.auto.util.exception.UpbitApiException;
 import lombok.Getter;
@@ -35,61 +35,64 @@ public class GetOrders {
     @Value("${upbit.open.api.server.url}")
     private String serverUrl;
 
-    private List<OrderWaitResponseDto> orders;
+    private final List<OrderWaitResponseDto> orders = new ArrayList<>();
 
     public void getOrder() {
         HashMap<String, String> params = new HashMap<>();
-        params.put("market", "KRW-BTC");
 
-        String[] states = {
-                "wait",
-                "watch"
-        };
+        for (String symbol : CoinListUtil.getList()) {
+            params.put("market", "KRW-" + symbol);
 
-        ArrayList<String> queryElements = new ArrayList<>();
-        for(Map.Entry<String, String> entity : params.entrySet()) {
-            queryElements.add(entity.getKey() + "=" + entity.getValue());
-        }
-        for(String state : states) {
-            queryElements.add("states[]=" + state);
-        }
+            String[] states = {
+                    "wait",
+                    "watch"
+            };
 
-        String queryString = String.join("&", queryElements.toArray(new String[0]));
+            ArrayList<String> queryElements = new ArrayList<>();
+            for(Map.Entry<String, String> entity : params.entrySet()) {
+                queryElements.add(entity.getKey() + "=" + entity.getValue());
+            }
+            for(String state : states) {
+                queryElements.add("states[]=" + state);
+            }
 
-        MessageDigest md = null;
-        try {
-            md = MessageDigest.getInstance("SHA-512");
-            md.update(queryString.getBytes(StandardCharsets.UTF_8));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+            String queryString = String.join("&", queryElements.toArray(new String[0]));
 
-        String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
+            MessageDigest md = null;
+            try {
+                md = MessageDigest.getInstance("SHA-512");
+                md.update(queryString.getBytes(StandardCharsets.UTF_8));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
 
-        Algorithm algorithm = Algorithm.HMAC256(secretKey);
-        String jwtToken = JWT.create()
-                .withClaim("access_key", accessKey)
-                .withClaim("nonce", UUID.randomUUID().toString())
-                .withClaim("query_hash", queryHash)
-                .withClaim("query_hash_alg", "SHA512")
-                .sign(algorithm);
+            String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
 
-        String authenticationToken = "Bearer " + jwtToken;
+            Algorithm algorithm = Algorithm.HMAC256(secretKey);
+            String jwtToken = JWT.create()
+                    .withClaim("access_key", accessKey)
+                    .withClaim("nonce", UUID.randomUUID().toString())
+                    .withClaim("query_hash", queryHash)
+                    .withClaim("query_hash_alg", "SHA512")
+                    .sign(algorithm);
 
-        try {
-            HttpClient client = HttpClientBuilder.create().build();
-            HttpGet request = new HttpGet(serverUrl + "/v1/orders/open?" + queryString);
-            request.setHeader("Content-Type", "application/json");
-            request.addHeader("Authorization", authenticationToken);
+            String authenticationToken = "Bearer " + jwtToken;
 
-            HttpResponse response = client.execute(request);
-            HttpEntity entity = response.getEntity();
+            try {
+                HttpClient client = HttpClientBuilder.create().build();
+                HttpGet request = new HttpGet(serverUrl + "/v1/orders/open?" + queryString);
+                request.setHeader("Content-Type", "application/json");
+                request.addHeader("Authorization", authenticationToken);
 
-            String json = EntityUtils.toString(entity, "UTF-8");
-            ObjectMapper objectMapper = new ObjectMapper();
-            orders = objectMapper.readValue(json, new TypeReference<List<OrderWaitResponseDto>>() {});
-        } catch (IOException e) {
-            throw new UpbitApiException(ExceptionCode.GET_ORDER_FAILURE, e.getMessage());
+                HttpResponse response = client.execute(request);
+                HttpEntity entity = response.getEntity();
+
+                String json = EntityUtils.toString(entity, "UTF-8");
+                ObjectMapper objectMapper = new ObjectMapper();
+                orders.addAll(objectMapper.readValue(json, new TypeReference<List<OrderWaitResponseDto>>() {}));
+            } catch (IOException e) {
+                throw new UpbitApiException(ExceptionCode.GET_ORDER_FAILURE, e.getMessage());
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.google.gson.Gson;
 import com.server.trading.auto.dto.AccountSaveRequestDto;
+import com.server.trading.auto.dto.OrderWaitResponseDto;
 import com.server.trading.auto.service.api.account.GetAccounts;
 import com.server.trading.auto.util.OrderType;
 import com.server.trading.auto.util.api.ExceptionCode;
@@ -38,26 +39,31 @@ public class PostOrders {
 
     private final GetAccounts getAccounts;
 
-    public void postOrder(String symbol, OrderType type, int percent) {
-        Map<String, Double> coins = getAccounts.getCoins();
-        List<AccountSaveRequestDto> account = getAccounts.getAccount();
-        Double balance = account.stream()
-                .filter(coin -> symbol.equals(coin.getCurrency()))
-                .findFirst()
-                .orElseThrow(
-                        () -> new UpbitApiException(ExceptionCode.ORDER_NOT_EXIST, null)
-                ).getBalance();
+    /*
+    bid: buy percent of my current KRW
+    ask: sell coin percent of number of coin
+     */
+    public OrderWaitResponseDto postOrder(String symbol, OrderType type, int percent) {
+        Map<String, Double> coins = getAccounts.getCoins();             // current asset of each coin
+        List<AccountSaveRequestDto> account = getAccounts.getAccount(); // list of asset (coins, KRW)
+
+        Double KRW = coins.get("KRW");
 
         HashMap<String, String> params = new HashMap<>();
         params.put("market", "KRW-" + symbol);
 
-        System.out.println(String.valueOf(balance * ((double) percent / 100) * coins.get(symbol)));
-
         if (type == OrderType.BID) {
             params.put("side", type.getOrder());
-            params.put("price", String.valueOf(coins.get(symbol) * ((double) percent / 100)));
+            params.put("price", String.valueOf(KRW * ((double) percent / 100)));
+//            params.put("price", String.valueOf(5500));
             params.put("ord_type", "price");
         } else if (type == OrderType.ASK) {
+            Double balance = account.stream()
+                    .filter(coin -> symbol.equals(coin.getCurrency()))
+                    .findFirst()
+                    .orElseThrow(
+                            () -> new UpbitApiException(ExceptionCode.ORDER_NOT_EXIST, null)
+                    ).getBalance();
             params.put("side", type.getOrder());
             params.put("volume", String.valueOf(balance * ((double) percent / 100)));
             params.put("ord_type", "market");
@@ -100,7 +106,9 @@ public class PostOrders {
             HttpResponse response = client.execute(request);
             HttpEntity entity = response.getEntity();
 
-            System.out.println(EntityUtils.toString(entity, "UTF-8"));
+            Gson gson = new Gson();
+            String json = EntityUtils.toString(entity, "UTF-8");
+            return gson.fromJson(json, OrderWaitResponseDto.class);
         } catch (IOException e) {
             throw new UpbitApiException(ExceptionCode.POST_ORDER_FAILURE, e.getMessage());
         }

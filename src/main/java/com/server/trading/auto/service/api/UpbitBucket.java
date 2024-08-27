@@ -19,4 +19,8 @@ public class UpbitBucket {
     public void execute() {
         this.apiList.forEach(UpbitAbstract::call);
     }
+
+    public void clear() {
+        this.apiList.forEach(UpbitAbstract::clear);
+    }
 }

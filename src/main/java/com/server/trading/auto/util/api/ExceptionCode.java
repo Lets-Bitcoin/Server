@@ -12,7 +12,8 @@ public enum ExceptionCode {
     DELETE_ORDER_FAILURE(4004, "주문을 취소하는 작업에 실패했습니다."),
     GET_ORDER_FAILURE(4005, "주문 목록을 가져오는 작업에 실패했습니다."),
     POST_ORDER_FAILURE(4006, "주문에 실패했습니다."),
-    ORDER_NOT_EXIST(4007, "해당 코인을 보유하고 있지 않습니다.");
+    ORDER_NOT_EXIST(4007, "해당 코인을 보유하고 있지 않습니다."),
+    DATA_NOT_SUFFICIENT(4008, "캔들의 수가 MACD 계산하기에 충분하지 않습니다.");
 
     private int code;
     private String message;
